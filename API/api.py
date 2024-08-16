@@ -5,6 +5,7 @@ import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/monitoring_db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Optional, but recommended to disable
 db = SQLAlchemy(app)
 
 class SystemData(db.Model):
@@ -39,5 +40,5 @@ def receive_data():
 
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()
+        db.create_all()  # Ensure tables are created within the application context
     app.run(host='0.0.0.0', port=5000)
