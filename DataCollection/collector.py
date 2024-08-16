@@ -21,10 +21,13 @@ def send_metrics():
     metrics['timestamp'] = datetime.now().isoformat()
     
     response = requests.post(REST_SERVICE_URL, json=metrics)
+    
+    print(metrics)
+
     if response.status_code != 200:
         print(f"Failed to send data: {response.text}")
 
 if __name__ == "__main__":
     while True:
         send_metrics()
-        time.sleep(3600)  # Sleep for 1 hour
+        time.sleep(10)  # Sleep for 1 hour put 3600

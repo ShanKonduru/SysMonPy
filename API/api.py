@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@localhost:5432/monitoring_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/monitoring_db'
 db = SQLAlchemy(app)
 
 class SystemData(db.Model):
@@ -38,5 +38,6 @@ def receive_data():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 if __name__ == "__main__":
-    db.create_all()
+    with app.app_context():
+        db.create_all()
     app.run(host='0.0.0.0', port=5000)
