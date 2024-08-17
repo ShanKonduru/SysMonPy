@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 import psycopg2
 from datetime import datetime
+import numpy as np
 
 DB_LOCATION = 'LOCAL' # 'CLOUD' # 
 
@@ -16,14 +17,29 @@ def fetch_data(query):
     conn.close()
     return data
 
+def calculate_limits(values):
+    mean = np.mean(values)
+    sigma = np.std(values)
+    ucl = mean + 3 * sigma
+    lcl = mean - 3 * sigma
+    return mean, ucl, lcl
+
 def plot_data(data, ax, ylabel):
     timestamps = [datetime.fromisoformat(row[0]) for row in data]
     values = [row[1] for row in data]
     
-    ax.plot(timestamps, values)
+    # Calculate control limits
+    mean, ucl, lcl = calculate_limits(values)
+
+    # Plot the data
+    ax.plot(timestamps, values, label='Data')
+    ax.axhline(mean, color='gray', linestyle='--', label='Mean')
+    ax.axhline(ucl, color='red', linestyle='--', label='UCL (Mean + 3 Sigma)')
+    ax.axhline(lcl, color='blue', linestyle='--', label='LCL (Mean - 3 Sigma)')
+    
     ax.set_xlabel('Time')
     ax.set_ylabel(ylabel)
-    ax.legend([ylabel])
+    ax.legend()
     ax.xaxis_date()
     ax.tick_params(axis='x', rotation=45)
 
