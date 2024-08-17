@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import tkinter as tk
 from tkinter import ttk
 import psycopg2
@@ -79,14 +79,17 @@ def create_tabbed_interface():
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=1)
 
+        # Add the navigation toolbar
+        toolbar = NavigationToolbar2Tk(canvas, tab)
+        toolbar.update()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=1)
+
     tab_control.pack(expand=1, fill="both")
 
-    # Bind the window close event to properly handle cleanup
     def on_closing():
         root.quit()
     
     root.protocol("WM_DELETE_WINDOW", on_closing)
-
     root.mainloop()
 
 if __name__ == "__main__":
