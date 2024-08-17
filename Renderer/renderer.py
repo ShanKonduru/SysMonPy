@@ -81,6 +81,12 @@ def create_tabbed_interface():
 
     tab_control.pack(expand=1, fill="both")
 
+    # Bind the window close event to properly handle cleanup
+    def on_closing():
+        root.quit()
+    
+    root.protocol("WM_DELETE_WINDOW", on_closing)
+
     root.mainloop()
 
 if __name__ == "__main__":
