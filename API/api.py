@@ -3,9 +3,14 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
 import os
 
+DB_LOCATION = 'LOCAL' # 'CLOUD' # 
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://app:8nQw8Tn3Zi10yK7PL1a40a3E@partly-complete-lioness.a1.pgedge.io/monitoring_db?sslmode=require'
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/monitoring_db'
+if (DB_LOCATION == 'CLOUD'):
+    DATABASE_URL = "postgresql://app:8nQw8Tn3Zi10yK7PL1a40a3E@partly-complete-lioness.a1.pgedge.io/monitoring_db?sslmode=require"
+else:
+    DATABASE_URL = 'postgresql://postgres:admin@localhost:5432/monitoring_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Optional, but recommended to disable
 db = SQLAlchemy(app)
 

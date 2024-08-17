@@ -2,9 +2,7 @@ import matplotlib.pyplot as plt
 import psycopg2
 from datetime import datetime
 
-# Connection string to connect to PostgreSQL
-DATABASE_URL = "postgresql://app:8nQw8Tn3Zi10yK7PL1a40a3E@partly-complete-lioness.a1.pgedge.io/monitoring_db?sslmode=require"
-
+DB_LOCATION = 'LOCAL' # 'CLOUD' # 
 
 def fetch_data():
     conn = psycopg2.connect(DATABASE_URL)
@@ -54,5 +52,10 @@ def plot_data(data):
     plt.show()
 
 if __name__ == "__main__":
+    if (DB_LOCATION == 'CLOUD'):
+        DATABASE_URL = "postgresql://app:8nQw8Tn3Zi10yK7PL1a40a3E@partly-complete-lioness.a1.pgedge.io/monitoring_db?sslmode=require"
+    else:
+        DATABASE_URL = 'postgresql://postgres:admin@localhost:5432/monitoring_db'
+
     data = fetch_data()
     plot_data(data)
