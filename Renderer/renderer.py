@@ -8,10 +8,19 @@ import numpy as np
 
 DB_LOCATION = 'LOCAL' # 'CLOUD' # 
 
-def fetch_data(query):
+def fetch_ip_addresses():
     conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
-    cursor.execute(query)
+    cursor.execute("SELECT DISTINCT ip_address FROM system_data")
+    ip_addresses = [row[0] for row in cursor.fetchall()]
+    cursor.close()
+    conn.close()
+    return ip_addresses
+
+def fetch_data(ip_address, query):
+    conn = psycopg2.connect(DATABASE_URL)
+    cursor = conn.cursor()
+    cursor.execute(query, (ip_address,))
     data = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -31,6 +40,9 @@ def plot_data(data, ax, ylabel):
     # Calculate control limits
     mean, ucl, lcl = calculate_limits(values)
 
+    # Clear the previous plot
+    ax.clear()
+
     # Plot the data
     ax.plot(timestamps, values, label='Data')
     ax.axhline(mean, color='gray', linestyle='--', label='Mean')
@@ -43,52 +55,69 @@ def plot_data(data, ax, ylabel):
     ax.xaxis_date()
     ax.tick_params(axis='x', rotation=45)
 
+def update_tabs(ip_address):
+    for tab_name, query in queries.items():
+        # Create or reuse the figure and axes
+        if tab_name not in figures:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            canvas = FigureCanvasTkAgg(fig, master=tabs[tab_name])
+            toolbar = NavigationToolbar2Tk(canvas, tabs[tab_name])
+            toolbar.update()
+            canvas.get_tk_widget().pack(fill=tk.BOTH, expand=1)
+            figures[tab_name] = (fig, ax, canvas)
+        else:
+            fig, ax, canvas = figures[tab_name]
+            canvas.get_tk_widget().pack_forget()  # Remove the old canvas
+
+        # Fetch data and update the plot
+        data = fetch_data(ip_address, query)
+        plot_data(data, ax, labels[tab_name])
+        canvas.draw()  # Redraw the canvas
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=1)
+
+def on_ip_change(event):
+    ip_address = ip_var.get()
+    update_tabs(ip_address)
+
 def create_tabbed_interface():
+    global tabs
+    global ip_var
+    global figures  # Store figures and canvases to manage them
+
     root = tk.Tk()
     root.title("System Data Visualization")
 
+    # Initialize the Tkinter variable
+    ip_var = tk.StringVar()
+
+    # Dropdown for IP addresses
+    ip_dropdown = ttk.Combobox(root, textvariable=ip_var)
+    ip_dropdown.bind("<<ComboboxSelected>>", on_ip_change)
+    ip_dropdown.pack(pady=10)
+
+    # Fetch and populate IP addresses
+    ip_addresses = fetch_ip_addresses()
+    ip_dropdown['values'] = ip_addresses
+    if ip_addresses:
+        ip_dropdown.set(ip_addresses[0])  # Set default IP address
+
     tab_control = ttk.Notebook(root)
-
-    # Queries for each tab
-    queries = {
-        "CPU Usage": "SELECT timestamp, cpu_usage FROM system_data",
-        "Memory Usage": "SELECT timestamp, memory_usage FROM system_data",
-        "RAM Usage": "SELECT timestamp, ram_usage FROM system_data",
-        "Disk Usage": "SELECT timestamp, disk_usage FROM system_data"
-    }
-
-    # Labels for each tab
-    labels = {
-        "CPU Usage": "CPU Usage (%)",
-        "Memory Usage": "Memory Usage (%)",
-        "RAM Usage": "RAM Usage (Bytes)",
-        "Disk Usage": "Disk Usage (%)"
-    }
+    tabs = {}
+    figures = {}  # Initialize a dictionary to store figure and canvas objects
 
     for tab_name, query in queries.items():
         tab = ttk.Frame(tab_control)
+        tabs[tab_name] = tab
         tab_control.add(tab, text=tab_name)
-
-        # Fetch data and create plot
-        data = fetch_data(query)
-        fig, ax = plt.subplots(figsize=(10, 6))
-        plot_data(data, ax, labels[tab_name])
-
-        # Add plot to the tab
-        canvas = FigureCanvasTkAgg(fig, master=tab)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=1)
-
-        # Add the navigation toolbar
-        toolbar = NavigationToolbar2Tk(canvas, tab)
-        toolbar.update()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=1)
 
     tab_control.pack(expand=1, fill="both")
 
+    # Initialize tabs with data for the default IP address
+    update_tabs(ip_dropdown.get())
+
     def on_closing():
         root.quit()
-    
+
     root.protocol("WM_DELETE_WINDOW", on_closing)
     root.mainloop()
 
@@ -97,5 +126,20 @@ if __name__ == "__main__":
         DATABASE_URL = "postgresql://app:8nQw8Tn3Zi10yK7PL1a40a3E@partly-complete-lioness.a1.pgedge.io/monitoring_db?sslmode=require"
     else:
         DATABASE_URL = 'postgresql://postgres:admin@localhost:5432/monitoring_db'
+
+    # Define queries and labels
+    queries = {
+        "CPU Usage": "SELECT timestamp, cpu_usage FROM system_data WHERE ip_address = %s",
+        "Memory Usage": "SELECT timestamp, memory_usage FROM system_data WHERE ip_address = %s",
+        "RAM Usage": "SELECT timestamp, ram_usage FROM system_data WHERE ip_address = %s",
+        "Disk Usage": "SELECT timestamp, disk_usage FROM system_data WHERE ip_address = %s"
+    }
+
+    labels = {
+        "CPU Usage": "CPU Usage (%)",
+        "Memory Usage": "Memory Usage (%)",
+        "RAM Usage": "RAM Usage (Bytes)",
+        "Disk Usage": "Disk Usage (%)"
+    }
 
     create_tabbed_interface()
