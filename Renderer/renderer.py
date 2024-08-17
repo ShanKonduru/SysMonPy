@@ -2,8 +2,12 @@ import matplotlib.pyplot as plt
 import psycopg2
 from datetime import datetime
 
+# Connection string to connect to PostgreSQL
+DATABASE_URL = "postgresql://app:8nQw8Tn3Zi10yK7PL1a40a3E@partly-complete-lioness.a1.pgedge.io/monitoring_db?sslmode=require"
+
+
 def fetch_data():
-    conn = psycopg2.connect("dbname=monitoring_db user=user password=password host=localhost")
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     query = "SELECT timestamp, cpu_usage, memory_usage, ram_usage, disk_usage, disk_space FROM system_data"
     cursor.execute(query)
