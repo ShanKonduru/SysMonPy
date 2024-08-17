@@ -1,55 +1,71 @@
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import tkinter as tk
+from tkinter import ttk
 import psycopg2
 from datetime import datetime
 
 DB_LOCATION = 'LOCAL' # 'CLOUD' # 
 
-def fetch_data():
+def fetch_data(query):
     conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
-    query = "SELECT timestamp, cpu_usage, memory_usage, ram_usage, disk_usage, disk_space FROM system_data"
     cursor.execute(query)
     data = cursor.fetchall()
     cursor.close()
     conn.close()
     return data
 
-def plot_data(data):
+def plot_data(data, ax, ylabel):
     timestamps = [datetime.fromisoformat(row[0]) for row in data]
-    cpu_usage = [row[1] for row in data]
-    memory_usage = [row[2] for row in data]
-    ram_usage = [row[3] for row in data]
-    disk_usage = [row[4] for row in data]
-    disk_space = [row[5] for row in data]
+    values = [row[1] for row in data]
+    
+    ax.plot(timestamps, values)
+    ax.set_xlabel('Time')
+    ax.set_ylabel(ylabel)
+    ax.legend([ylabel])
+    ax.xaxis_date()
+    ax.tick_params(axis='x', rotation=45)
 
-    plt.figure(figsize=(10, 6))
+def create_tabbed_interface():
+    root = tk.Tk()
+    root.title("System Data Visualization")
 
-    plt.subplot(2, 2, 1)
-    plt.plot(timestamps, cpu_usage, label='CPU Usage')
-    plt.xlabel('Time')
-    plt.ylabel('CPU Usage (%)')
-    plt.legend()
+    tab_control = ttk.Notebook(root)
 
-    plt.subplot(2, 2, 2)
-    plt.plot(timestamps, memory_usage, label='Memory Usage', color='r')
-    plt.xlabel('Time')
-    plt.ylabel('Memory Usage (%)')
-    plt.legend()
+    # Queries for each tab
+    queries = {
+        "CPU Usage": "SELECT timestamp, cpu_usage FROM system_data",
+        "Memory Usage": "SELECT timestamp, memory_usage FROM system_data",
+        "RAM Usage": "SELECT timestamp, ram_usage FROM system_data",
+        "Disk Usage": "SELECT timestamp, disk_usage FROM system_data"
+    }
 
-    plt.subplot(2, 2, 3)
-    plt.plot(timestamps, ram_usage, label='RAM Usage', color='g')
-    plt.xlabel('Time')
-    plt.ylabel('RAM Usage (Bytes)')
-    plt.legend()
+    # Labels for each tab
+    labels = {
+        "CPU Usage": "CPU Usage (%)",
+        "Memory Usage": "Memory Usage (%)",
+        "RAM Usage": "RAM Usage (Bytes)",
+        "Disk Usage": "Disk Usage (%)"
+    }
 
-    plt.subplot(2, 2, 4)
-    plt.plot(timestamps, disk_usage, label='Disk Usage', color='b')
-    plt.xlabel('Time')
-    plt.ylabel('Disk Usage (%)')
-    plt.legend()
+    for tab_name, query in queries.items():
+        tab = ttk.Frame(tab_control)
+        tab_control.add(tab, text=tab_name)
 
-    plt.tight_layout()
-    plt.show()
+        # Fetch data and create plot
+        data = fetch_data(query)
+        fig, ax = plt.subplots(figsize=(10, 6))
+        plot_data(data, ax, labels[tab_name])
+
+        # Add plot to the tab
+        canvas = FigureCanvasTkAgg(fig, master=tab)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=1)
+
+    tab_control.pack(expand=1, fill="both")
+
+    root.mainloop()
 
 if __name__ == "__main__":
     if (DB_LOCATION == 'CLOUD'):
@@ -57,5 +73,4 @@ if __name__ == "__main__":
     else:
         DATABASE_URL = 'postgresql://postgres:admin@localhost:5432/monitoring_db'
 
-    data = fetch_data()
-    plot_data(data)
+    create_tabbed_interface()
