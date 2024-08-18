@@ -24,7 +24,7 @@ services:
       DB_LOCATION: LOCAL  # Or CLOUD depending on your setup
 
   datacollector:
-    build: ./DataCollector
+    build: ./DataCollection
     depends_on:
       - api
     networks:
