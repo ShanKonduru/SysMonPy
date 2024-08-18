@@ -1,6 +1,11 @@
 # API/Dockerfile
 FROM python:3.11-alpine
 
+# Install build dependencies
+RUN apk add --no-cache gcc python3-dev musl-dev linux-headers
+
+# Set up poetry
+RUN pip install poetry
 WORKDIR /app
 
 # Install Poetry
