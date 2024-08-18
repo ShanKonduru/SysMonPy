@@ -4,7 +4,7 @@ import time
 import socket
 from datetime import datetime
 
-REST_SERVICE_URL = 'http://localhost:5000/data'
+REST_SERVICE_URL = 'http://192.168.127.163:5000/data'
 
 def get_system_metrics():
     print('in get_system_metrics')
