@@ -123,9 +123,9 @@ def create_tabbed_interface():
 
 if __name__ == "__main__":
     if (DB_LOCATION == 'CLOUD'):
-        DATABASE_URL = "postgresql://app:8nQw8Tn3Zi10yK7PL1a40a3E@partly-complete-lioness.a1.pgedge.io/monitoring_db?sslmode=require"
+        DATABASE_URL = "" # Provide PostgreSQL Cloud DB Connection String here.
     else:
-        DATABASE_URL = 'postgresql://postgres:admin@localhost:5432/monitoring_db'
+        DATABASE_URL = "" # Provide PostgreSQL local DB Connection String here.
 
     # Define queries and labels
     queries = {
